@@ -53,27 +53,7 @@ std::vector<uint32_t> baitus_sujungt_po_4(std::vector<uint8_t> baitai)
 
 std::vector<uint8_t> gaut_256bit_hasha(std::vector<uint32_t> blokai)
 {
-    for (auto it = blokai.begin(); it < blokai.end(); ++it)
-    {
-        auto idx = std::distance(blokai.begin(), it);
-        *it += idx;
-        *it *= 7;
-        *it = std::rotr(*it, idx % 3 + 1);
-    }
-
-    for (auto it = blokai.begin(); it < blokai.end() - 1; ++it)
-    {
-        *it = *it * *(it + 1);
-        *it = *it ^ *(it + 1);
-    }
-    for (auto it = blokai.rbegin(); it < blokai.rend() - 1; ++it)
-    {
-        *it = *it ^ *(it + 1);
-    }
-    // =====
-
-    // =======================================================
-    // ===== MAIŠA (256 bitų bloko paruošimas)
+    // ===== blokų skaičiaus suvienodinimas (8 4-baičiai blokai)
 
     if (blokai.size() < 8)
     {
@@ -110,7 +90,16 @@ std::vector<uint8_t> gaut_256bit_hasha(std::vector<uint32_t> blokai)
         }
     }
 
-    // =======================================================
+    // ===== papildoma blokų maiša
+
+    for (int i = 0; i < blokai.size(); ++i)
+    {
+        for (int j = 0; j < blokai.size(); ++j)
+        {
+            blokai[i] += blokai[j];
+        }
+    }
+
     // ===== blokų atskaidymas baituos
 
     std::vector<uint8_t> isvestis;
@@ -123,24 +112,41 @@ std::vector<uint8_t> gaut_256bit_hasha(std::vector<uint32_t> blokai)
             isvestis.push_back(*it);
         }
     }
+
+    // ===== paskutinė maiša atskirais baitais (dėl lavinos efekto)
+    for (int i = 0; i < isvestis.size(); ++i)
+    {
+        for (int j = 0; j < isvestis.size(); ++j)
+        {
+            if (i != j)
+            {
+                isvestis.at(i) += isvestis.at(j);
+            }
+        }
+    }
+
     return isvestis;
 }
 
 int main()
 {
-    std::string investis_str;
-    std::cout << "Invesk tekstu:\n";
-    std::getline(std::cin, investis_str);
-    std::vector<uint8_t> investis(investis_str.begin(), investis_str.end());
-    auto inv_ilgis = investis.size();
-    spausd_baitais(investis);
-    std::cout << '\n';
+    for (;;)
+    {
+        std::string investis_str;
+        std::cout << "Invesk tekstu:\n";
+        std::getline(std::cin, investis_str);
+        if (investis_str.length() == 0)
+            continue;
+        std::vector<uint8_t> investis(investis_str.begin(), investis_str.end());
+        auto inv_ilgis = investis.size();
+        spausd_baitais(investis);
+        std::cout << '\n';
 
-    std::vector<uint32_t> blokai = baitus_sujungt_po_4(investis);
-    std::vector<uint8_t> hashas = gaut_256bit_hasha(blokai);
+        std::vector<uint32_t> blokai = baitus_sujungt_po_4(investis);
+        std::vector<uint8_t> hashas = gaut_256bit_hasha(blokai);
 
-    spausd_baitais(hashas);
-    spausd_raidem(hashas);
-
+        spausd_baitais(hashas);
+        spausd_raidem(hashas);
+    }
     return 0;
 }
