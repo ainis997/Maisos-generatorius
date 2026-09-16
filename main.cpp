@@ -84,16 +84,30 @@ int main()
                 idx = blokai.size() - 1;
             uint32_t naujas_blokas = blokai.at(idx);
             naujas_blokas = std::rotr(naujas_blokas, idx % 2 + 1);
+            blokai.push_back(naujas_blokas);
             --idx;
         }
     }
     else if (blokai.size() > 8)
     {
-        //
+        for (int i = 0; i < 8; ++i)
+        {
+            int idx = i + 8;
+            while (idx < blokai.size())
+            {
+                blokai.at(i) = blokai.at(i) ^ blokai.at(idx);
+                idx += 8;
+            }
+            blokai.at(i) = std::rotr(blokai.at(i), idx % 2 + 1);
+        }
+        blokai.resize(8);
     }
     else
     {
-        //
+        for (int i = 0; i < 8; ++i)
+        {
+            blokai.at(i) = std::rotr(blokai.at(i), i % 2 + 1);
+        }
     }
 
     // =======================================================
