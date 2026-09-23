@@ -3,6 +3,8 @@
 #include <iomanip>
 #include <cstring> // dėl std::memcpy()
 #include <bit>     // dėl std::byteswap()
+#include <exception>
+#include "portable-file-dialogs.h"
 
 #ifdef _WIN32 // jei programa veikia Windowsuos:
 #include <windows.h>
@@ -53,4 +55,18 @@ void istatyt_utf8()
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 #endif
+}
+
+std::string failo_pasirinkimas() noexcept(false)
+{
+    auto pasirinkimas_vektoriuj = pfd::open_file(
+                                      "Pasirinkite tekstinį failą",
+                                      pfd::path::home(),
+                                      {"Tekstiniai failai (.txt .text)", "*.txt *.text", "Visi failai", "*"})
+                                      .result();
+    if (pasirinkimas_vektoriuj.empty())
+    {
+        throw std::runtime_error("Nepavyko pasirinkti failo.");
+    }
+    return pasirinkimas_vektoriuj[0]; // neleidžiam rinktis kelių failų, tai tik vienas elementas bus vektoriuj
 }
