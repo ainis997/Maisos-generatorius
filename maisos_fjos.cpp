@@ -1,6 +1,7 @@
-#include <maisos_fjos.h>
+#include "maisos_fjos.h"
 #include <bit> // dėl std::rotr (rotate bits to right)
 #include <array>
+#include <cstring> // dėl std::memcpy()
 
 std::vector<std::uint8_t> gaut_256bit_hasha(std::vector<std::uint32_t> blokai)
 {

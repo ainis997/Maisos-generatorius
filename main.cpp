@@ -1,24 +1,22 @@
-#include <maisos_fjos.h>
-#include <pagalb_fjos.h>
+#include "maisos_fjos.h"
+#include "pagalb_fjos.h"
 #include <string>
 #include <iostream>
 
-// #include <iostream>
-// #include <string>
-// #include <vector>
-// #include <array>
-// #include <cstdint>
-// #include <cstring>
-// #include <bit>
-// #include <iomanip>
-
 int main()
 {
+    istatyt_utf8(); // windows aplinkos terminalui padaro UTF-8 koduotę (Linux ir macOS ją ir taip naudoja)
+
+    std::cout << "Maišos generavimo programa.\nNorėdami baigti programą, spauskite Ctrl+C.\n\n";
     for (;;)
     {
         std::string investis_str;
-        std::cout << "Invesk tekstu:\n";
-        std::getline(std::cin, investis_str);
+        std::cout << "\nĮveskite tekstą:\n";
+        if (!std::getline(std::cin, investis_str))
+        {
+            std::cout << "\nPrograma baigiama...";
+            break;
+        }
         if (investis_str.length() == 0)
             continue;
         std::vector<std::uint8_t> investis(investis_str.begin(), investis_str.end());
