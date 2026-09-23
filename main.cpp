@@ -29,7 +29,7 @@ int main()
         std::string investis_str;
         if (eiga == "1")
         {
-            std::cout << "\nĮveskite tekstą:\n";
+            std::cout << "\nPasirinktas teksto įvesties būdas: RANKINIS\n\nĮveskite tekstą:\n";
             if (!std::getline(std::cin, investis_str))
             {
                 std::cout << "\n\nPrograma baigiama...";
@@ -40,6 +40,7 @@ int main()
         }
         else // 2 - failo įvestis
         {
+            std::cout << "\nPasirinktas teksto įvesties būdas: FAILAS\n\nPasirinkite failą pasirinkimo lange...\n";
             std::string failo_kelias;
             try
             {
@@ -69,8 +70,9 @@ int main()
         std::vector<std::uint32_t> blokai = baitus_sujungt_po_4(investis);
         std::vector<std::uint8_t> hashas = gaut_256bit_hasha(blokai);
 
+        std::cout << "Maiša:\n";
         spausd_baitais(hashas);
-        spausd_raidem(hashas);
+        // spausd_raidem(hashas);
     }
     return 0;
 }
