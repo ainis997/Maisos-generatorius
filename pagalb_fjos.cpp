@@ -15,7 +15,7 @@ void spausd_baitais(std::vector<std::uint8_t> baitai)
     std::cout << std::hex; // tai lieka kaip nustatymas
     for (std::uint8_t baitas : baitai)
     {
-        std::cout << std::setfill('0') << std::setw(2) << static_cast<int>(baitas) << " ";
+        std::cout << std::setfill('0') << std::setw(2) << static_cast<int>(baitas);
     }
     std::cout << '\n';
 }

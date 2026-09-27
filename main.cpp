@@ -50,6 +50,7 @@ int main()
                 {
                     throw std::runtime_error("Nepavyko nuskaityti failo.");
                 }
+                std::cout << "Pasirinktas failas: " << failo_kelias << "\n\n";
                 std::stringstream buferis;
                 buferis << failas.rdbuf();
                 investis_str = buferis.str();
