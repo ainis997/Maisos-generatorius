@@ -53,6 +53,10 @@ int main()
                 std::stringstream buferis;
                 buferis << failas.rdbuf();
                 investis_str = buferis.str();
+                if (investis_str.size() == 0)
+                {
+                    throw std::runtime_error("Pasirinktas failas yra tuščias.");
+                }
                 failas.close();
             }
             catch (const std::runtime_error &e)

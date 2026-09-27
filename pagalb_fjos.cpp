@@ -60,7 +60,7 @@ void istatyt_utf8()
 std::string failo_pasirinkimas() noexcept(false)
 {
     auto pasirinkimas_vektoriuj = pfd::open_file(
-                                      "Pasirinkite tekstinį failą",
+                                      "Pasirinkite failą",
                                       pfd::path::home(),
                                       {"Tekstiniai failai (.txt .text)", "*.txt *.text", "Visi failai", "*"})
                                       .result();
