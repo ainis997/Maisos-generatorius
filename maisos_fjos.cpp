@@ -3,7 +3,7 @@
 #include <array>
 #include <cstring> // dėl std::memcpy()
 
-std::vector<std::uint8_t> gaut_256bit_hasha(std::vector<std::uint32_t> blokai)
+std::vector<std::uint8_t> gaut_256bit_hasha(std::vector<std::uint32_t> &&blokai)
 {
     // ===== blokų skaičiaus suvienodinimas (8 4-baičiai blokai)
 
