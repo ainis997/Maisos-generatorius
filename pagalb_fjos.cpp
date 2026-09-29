@@ -4,6 +4,7 @@
 #include <cstring> // dėl std::memcpy()
 #include <bit>     // dėl std::byteswap()
 #include <exception>
+#include <random>
 #include "portable-file-dialogs.h"
 
 #ifdef _WIN32 // jei programa veikia Windowsuos:
@@ -88,4 +89,20 @@ std::string failo_pasirinkimas() noexcept(false)
         throw std::runtime_error("Nepavyko pasirinkti failo.");
     }
     return pasirinkimas_vektoriuj[0]; // neleidžiam rinktis kelių failų, tai tik vienas elementas bus vektoriuj
+}
+
+// -------- EKSPERIMENTŲ PAGALB. FUNKCIJOS
+
+std::string generuotRandomStr(std::size_t ilgis, const std::string raidynas, std::mt19937_64 &generatorius, std::uniform_int_distribution<std::size_t> &pasiskirstymas)
+{
+    // raidyną, generatorių ir pasiskirstymą priimam argumentais, kad nereiktų jų kiekvienąkart funkcijoj kurt per naują
+    std::string randomStr;
+    randomStr.reserve(ilgis);
+
+    for (std::size_t i = 0; i < ilgis; ++i)
+    {
+        randomStr.push_back(raidynas[pasiskirstymas(generatorius)]);
+    }
+
+    return randomStr;
 }

@@ -2,6 +2,7 @@
 #include <bit> // dėl std::rotr (rotate bits to right)
 #include <array>
 #include <cstring> // dėl std::memcpy()
+#include "pagalb_fjos.h"
 
 std::vector<std::uint8_t> gaut_256bit_hasha(std::vector<std::uint32_t> &&blokai)
 {
@@ -78,4 +79,10 @@ std::vector<std::uint8_t> gaut_256bit_hasha(std::vector<std::uint32_t> &&blokai)
     }
 
     return isvestis;
+}
+
+std::vector<std::uint8_t> str_i_hasha(const std::string &str)
+{
+    std::vector<std::uint8_t> ivestis(str.begin(), str.end());
+    return gaut_256bit_hasha(baitus_sujungt_po_4(std::move(ivestis)));
 }
