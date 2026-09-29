@@ -7,6 +7,7 @@
 #include <sstream>
 #include <chrono>
 #include <random>
+#include <bit> // dėl std::popcount()
 
 struct StrPora
 {
@@ -22,13 +23,13 @@ int main()
     for (;;)
     {
         std::string eiga;
-        std::cout << "\nPasirinkite programos eigą:\n1 - Rankinis teksto įvedimas\n2 - Failo turinio įvestis\n3 - Efektyvumo matavimas (su failu)\n4 - Kolizijos tyrimas\nPasirinkimas: ";
+        std::cout << "\nPasirinkite programos eigą:\n1 - Rankinis teksto įvedimas\n2 - Failo turinio įvestis\n3 - Efektyvumo matavimas (su failu)\n4 - Kolizijos tyrimas\n5 - Lavinos efekto tyrimas\nPasirinkimas: ";
         if (!std::getline(std::cin, eiga))
         {
             std::cout << "\n\nPrograma baigiama...";
             break;
         }
-        if (eiga != "1" && eiga != "2" && eiga != "3" && eiga != "4")
+        if (eiga != "1" && eiga != "2" && eiga != "3" && eiga != "4" && eiga != "5")
         {
             std::cout << "Tokio pasirinkimo nėra.\n";
             continue;
@@ -222,6 +223,90 @@ int main()
                     }
                 }
             }
+        }
+        else if (eiga == "5")
+        {
+            // ASCII charai 32-126 (visi kiti yra sisteminiai simboliai ir pan., nepanaudojami)
+            const std::string raidynas =
+                " !\"#$%&'()*+,-./"
+                "0123456789"
+                ":;<=>?@"
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                "[\\]^_`"
+                "abcdefghijklmnopqrstuvwxyz"
+                "{|}~";
+
+            unsigned int sekla = 123456789;
+            std::mt19937_64 generatorius(sekla);
+            std::uniform_int_distribution<std::size_t> raidyno_pasiskirstymas(0, raidynas.size() - 1); // duos tolygiai paskirstytą random indeksą raidyno simboliui parinkt
+            std::cout << "\nEilučių generatorius: std::mt19937_64\nSėkla: " << sekla << '\n';
+
+            std::vector<size_t> str_dydziai = {10, 100, 500, 1000};
+
+            unsigned int bendr_hex_skirtumai = 0;
+            unsigned int bendr_visi_hex_skaitmenys = 0;
+            unsigned int bendr_bitu_skirtumai = 0;
+            unsigned int bendr_visi_bitu_skaitmenys = 0;
+
+            const size_t poruSk = 25000; // kiekvienam str_dydziui
+            for (size_t str_dydis : str_dydziai)
+            {
+                std::uniform_int_distribution<size_t> pozicijos_pasiskirstymas(0, str_dydis - 1);
+                unsigned int hex_skirtumai = 0;
+                unsigned int visi_hex_skaitmenys = 0;
+                unsigned int bitu_skirtumai = 0;
+                unsigned int visi_bitu_skaitmenys = 0;
+
+                for (size_t i = 0; i < poruSk; ++i)
+                {
+                    std::string str1 = generuotRandomStr(str_dydis, raidynas, generatorius, raidyno_pasiskirstymas);
+                    std::string str2 = str1;
+                    size_t pos = pozicijos_pasiskirstymas(generatorius);
+                    char sena_raide = str2.at(pos);
+                    char nauja_raide;
+                    do
+                    {
+                        nauja_raide = raidynas.at(raidyno_pasiskirstymas(generatorius));
+                    } while (nauja_raide == sena_raide);
+                    str2.at(pos) = nauja_raide;
+
+                    auto hash1 = str_i_hasha(str1);
+                    auto hash2 = str_i_hasha(str2);
+
+                    // hex skirtumas
+                    for (size_t i = 0; i < hash1.size(); ++i)
+                    {
+                        std::uint8_t aukst_hex_skaitmuo_1 = (hash1[i] >> 4) & 0x0F; // 4 aukstesnius bitus pastumiam zemesniu 4 vieton, ir su & 0x0F juosius pasirenkam (1 & x = 1)
+                        std::uint8_t zem_hex_skaitmuo_1 = hash1[i] & 0x0F;
+                        std::uint8_t aukst_hex_skaitmuo_2 = (hash2[i] >> 4) & 0x0F; // Xx
+                        std::uint8_t zem_hex_skaitmuo_2 = hash2[i] & 0x0F;          // xX
+                        if (aukst_hex_skaitmuo_1 != aukst_hex_skaitmuo_2)
+                            ++hex_skirtumai;
+                        if (zem_hex_skaitmuo_1 != zem_hex_skaitmuo_2)
+                            ++hex_skirtumai;
+                        visi_hex_skaitmenys += 2;
+                    }
+
+                    // bitu skirtumas
+                    for (size_t i = 0; i < hash1.size(); ++i)
+                    {
+                        std::uint8_t skirtumas = hash1[i] ^ hash2[i];
+                        bitu_skirtumai += std::popcount(skirtumas);
+                        visi_bitu_skaitmenys += 8;
+                    }
+                }
+
+                std::cout << "\n"
+                          << str_dydis << " ILGIO EILUTĖS:\nBitų skirtumai: " << bitu_skirtumai << "\nViso bitų: " << visi_bitu_skaitmenys << "\nSkirtumas (bitų): " << 100 * (bitu_skirtumai * 1.0) / (visi_bitu_skaitmenys * 1.0) << "%\nHex skirtumai: " << hex_skirtumai << "\nViso hexų: " << visi_hex_skaitmenys << "\nSkirtumas (hex): " << 100 * (hex_skirtumai * 1.0) / (visi_hex_skaitmenys * 1.0) << "%\n";
+
+                // sumuojam ir bendrai, kad būtų ir bendros statistikos
+                bendr_hex_skirtumai += hex_skirtumai;
+                bendr_visi_hex_skaitmenys += visi_hex_skaitmenys;
+                bendr_bitu_skirtumai += bitu_skirtumai;
+                bendr_visi_bitu_skaitmenys += visi_bitu_skaitmenys;
+            }
+
+            std::cout << "\nBENDRAI:\nBitų skirtumai: " << bendr_bitu_skirtumai << "\nViso bitų: " << bendr_visi_bitu_skaitmenys << "\nSkirtumas (bitų): " << 100 * (bendr_bitu_skirtumai * 1.0) / (bendr_visi_bitu_skaitmenys * 1.0) << "%\nHex skirtumai: " << bendr_hex_skirtumai << "\nViso hexų: " << bendr_visi_hex_skaitmenys << "\nSkirtumas (hex): " << 100 * (bendr_hex_skirtumai * 1.0) / (bendr_visi_hex_skaitmenys * 1.0) << "%\n";
         }
     }
     return 0;
