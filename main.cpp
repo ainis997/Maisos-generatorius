@@ -7,7 +7,6 @@
 #include <sstream>
 #include <chrono>
 #include <random>
-#include <map>
 
 struct StrPora
 {
@@ -152,21 +151,21 @@ int main()
             std::uniform_int_distribution<std::size_t> pasiskirstymas(0, raidynas.size() - 1); // duos tolygiai paskirstytą random indeksą raidyno simboliui parinkt
             std::cout << "\nEilučių generatorius: std::mt19937_64\nSėkla: " << sekla << '\n';
 
-            size_t poruSk = 100000;
+            std::vector<size_t> str_dydziai = {10, 100, 500, 1000};
+            std::vector<StrPora> kolizijos;
 
-            std::vector<size_t> strDydziai = {10, 100, 500, 1000};
-            //  std::map<size_t, std::vector<StrPora>> strPoruVektoriai;
+            // TIKRINIMAS POROMIS
 
-            for (size_t strDydis : strDydziai)
+            const size_t poruSk = 100000;
+            for (size_t str_dydis : str_dydziai)
             {
-                std::vector<StrPora> kolizijos;
                 for (size_t i = 0; i < poruSk; ++i)
                 {
-                    std::string str1 = generuotRandomStr(10, raidynas, generatorius, pasiskirstymas);
-                    std::string str2 = generuotRandomStr(10, raidynas, generatorius, pasiskirstymas);
+                    std::string str1 = generuotRandomStr(str_dydis, raidynas, generatorius, pasiskirstymas);
+                    std::string str2 = generuotRandomStr(str_dydis, raidynas, generatorius, pasiskirstymas);
                     while (str1 == str2) // beveik neįmanoma, bet atsargai
                     {
-                        str2 = generuotRandomStr(10, raidynas, generatorius, pasiskirstymas);
+                        str2 = generuotRandomStr(str_dydis, raidynas, generatorius, pasiskirstymas);
                     }
                     auto hash1 = str_i_hasha(str1);
                     auto hash2 = str_i_hasha(str2);
@@ -175,7 +174,45 @@ int main()
                         kolizijos.push_back({str1, str2});
                     }
                 }
-                std::cout << "Tarp " << poruSk << " eilučių (" << strDydis << " ilgio) porų, rasta " << kolizijos.size() << " kolizijų.\n";
+                std::cout << "Tarp " << poruSk << " eilučių (" << str_dydis << " ilgio) porų, kolizijų rasta: " << kolizijos.size() << "\n";
+                if (kolizijos.size() > 0)
+                {
+                    std::cout << "Kolizijos:\n";
+                    for (StrPora kolizija : kolizijos)
+                    {
+                        std::cout << kolizija.str1 << " : " << kolizija.str2 << '\n';
+                    }
+                }
+            }
+
+            // TIKRINIMAS VISŲ SU VISAIS
+
+            kolizijos.clear(); // porų tikrinimo kolizijas jau tikrinom, tai kad nekartot išvalom vektorių
+            const size_t str_sk = 100000;
+            for (size_t str_dydis : str_dydziai)
+            {
+                std::vector<std::string> eilutes;
+                eilutes.reserve(str_sk);
+                // eilučių generavimas
+                for (size_t i = 0; i < str_sk; ++i)
+                {
+                    eilutes.push_back(generuotRandomStr(str_dydis, raidynas, generatorius, pasiskirstymas));
+                }
+                // kolizijų tikrinimas (visi su visais)
+                for (size_t i = 0; i < str_sk; ++i)
+                {
+                    for (size_t j = 0; i < str_sk; ++i)
+                    {
+                        if (i != j && eilutes[i] != eilutes[j])
+                        {
+                            if (str_i_hasha(eilutes[i]) == str_i_hasha(eilutes[j]))
+                            {
+                                kolizijos.push_back({eilutes[i], eilutes[j]});
+                            }
+                        }
+                    }
+                }
+                std::cout << "Tarp " << poruSk << " eilučių (" << str_dydis << " ilgio), kolizijų rasta: " << kolizijos.size() << "\n";
                 if (kolizijos.size() > 0)
                 {
                     std::cout << "Kolizijos:\n";
