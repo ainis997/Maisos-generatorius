@@ -126,7 +126,6 @@ int main()
         else if (eiga == "1" || eiga == "2")
         {
             std::vector<std::uint8_t> investis(investis_str.begin(), investis_str.end());
-            auto inv_ilgis = investis.size();
             std::vector<std::uint32_t> blokai = baitus_sujungt_po_4(std::move(investis));
             std::vector<std::uint8_t> hashas = gaut_256bit_hasha(std::move(blokai));
 
@@ -176,7 +175,7 @@ int main()
                         kolizijos.push_back({str1, str2});
                     }
                 }
-                std::cout << "Tarp " << poruSk << " eilučių (" << str_dydis << " ilgio) porų, kolizijų rasta: " << kolizijos.size() << "\n";
+                std::cout << std::dec << "Tarp " << poruSk << " eilučių (" << str_dydis << " ilgio) porų, kolizijų rasta: " << kolizijos.size() << "\n";
                 if (kolizijos.size() > 0)
                 {
                     std::cout << "Kolizijos:\n";
@@ -358,7 +357,7 @@ int main()
                     }
                 }
 
-                std::cout << "\n"
+                std::cout << std::dec << "\n"
                           << str_dydis << " ILGIO EILUTĖS:\nBitų skirtumai: " << bitu_skirtumai << "\nViso bitų: " << visi_bitu_skaitmenys << "\nSkirtumas (bitų): " << 100 * (bitu_skirtumai * 1.0) / (visi_bitu_skaitmenys * 1.0) << "%\nHex skirtumai: " << hex_skirtumai << "\nViso hexų: " << visi_hex_skaitmenys << "\nSkirtumas (hex): " << 100 * (hex_skirtumai * 1.0) / (visi_hex_skaitmenys * 1.0) << "%\n";
 
                 // sumuojam ir bendrai, kad būtų ir bendros statistikos
@@ -423,7 +422,7 @@ int main()
                 }
                 auto pab = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> laikas = pab - pr;
-                std::cout << "\nĮvestis: " << ivestis << "\nMaiša: ";
+                std::cout << std::dec << "\nĮvestis: " << ivestis << "\nMaiša: ";
                 spausd_baitais(maisa);
                 std::cout << "\nSpėjimas:\nRasti kandidatai: ";
                 for (auto sutap : sutapimai)
