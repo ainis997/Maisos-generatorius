@@ -224,6 +224,67 @@ int main()
                     }
                 }
             }
+
+            // struktūruotų įvesčių rinkinio tikrinimas
+
+            std::vector<std::string> ivestys_perstatymas1 = {
+                "ABCDEFGH",
+                "HGFEDCBA",
+                "DCBAHGFE",
+                "EFGHABCD",
+                "HGFEDCBA",
+                "ABEFCDGH",
+                "ABGHCDEF",
+                "GHEFCDAB",
+            };
+            std::vector<std::string> ivestys_perstatymas2 = {
+                "BAAAAAAA",
+                "ABAAAAAA",
+                "AABAAAAA",
+                "AAABAAAA",
+                "AAAABAAA",
+                "AAAAABAA",
+                "AAAAAABA",
+                "AAAAAAAB",
+            };
+            std::vector<std::string> ivestys_pasikartojimai = {
+                "AAAAAAAA",
+                "ABABABAB",
+                "ABCABCAB",
+                "ABCDABCD",
+                "11111111",
+                "12121212",
+                "12312312",
+                "12341234",
+            };
+            std::vector<std::vector<std::string>> tiriami_rinkiniai = {ivestys_pasikartojimai, ivestys_perstatymas1, ivestys_perstatymas2};
+
+            kolizijos.clear();
+            for (auto rinkinys : tiriami_rinkiniai)
+            {
+                for (int i = 0; i < rinkinys.size(); ++i)
+                {
+                    for (int j = 0; j < rinkinys.size(); ++j)
+                    {
+                        if (i != j && rinkinys[i] != rinkinys[j])
+                        {
+                            if (str_i_hasha(rinkinys[i]) == str_i_hasha(rinkinys[j]))
+                            {
+                                kolizijos.push_back({rinkinys[i], rinkinys[j]});
+                            }
+                        }
+                    }
+                }
+            }
+            std::cout << "Tarp struktūruotų atvejų rinkinių, kolizijų rasta: " << kolizijos.size() << "\n";
+            if (kolizijos.size() > 0)
+            {
+                std::cout << "Kolizijos:\n";
+                for (StrPora kolizija : kolizijos)
+                {
+                    std::cout << kolizija.str1 << " : " << kolizija.str2 << '\n';
+                }
+            }
         }
         else if (eiga == "5")
         {
@@ -311,11 +372,6 @@ int main()
         }
         else if (eiga == "6")
         {
-            // // generavimui random skaičiaus nuo 0000 lig 9999
-            // unsigned int sekla = 123456789;
-            // std::mt19937_64 generatorius(sekla);
-            // std::uniform_int_distribution<std::size_t> pasiskirstymas(0, raidynas.size() - 1); // duos tolygiai paskirstytą random indeksą raidyno simboliui parinkt
-
             // kandidatų rinkinys
             std::vector<std::string> kandidatai;
             kandidatai.reserve(10000);
@@ -329,18 +385,27 @@ int main()
                 kandidatai.push_back(str);
             }
 
+            // random generatoriaus paruošimas
+            unsigned int sekla = 123456789;
+            std::mt19937_64 generatorius(sekla);
+
+            // įvesties generavimas
+            std::uniform_int_distribution<std::size_t> nuo_0_lig_9999(0, 9999);
+            std::string ivestis = std::to_string(nuo_0_lig_9999(generatorius));
+            while (ivestis.size() < 4)
+            {
+                ivestis.insert(0, "0");
+            }
+
             // spėjimas be druskos
 
-            const std::string ivestis = "6997";
             auto maisa = str_i_hasha(ivestis);
 
             {
                 std::vector<std::string> sutapimai;
-                auto pr = std::chrono::high_resolution_clock::now();
-                auto pab = std::chrono::high_resolution_clock::now(); // maža kas jei neras sutapimo, tai pab sutaps su pr ir matysis tai
-
                 bool ar_jau_rastas_sutapimas = false;
                 int bandymu_sk = 0;
+                auto pr = std::chrono::high_resolution_clock::now();
                 for (int i = 0; i < kandidatai.size(); ++i)
                 {
                     auto kand = kandidatai.at(i);
@@ -350,13 +415,13 @@ int main()
                         sutapimai.push_back(kand);
                         if (!ar_jau_rastas_sutapimas)
                         {
-                            pab = std::chrono::high_resolution_clock::now();
                             bandymu_sk = i + 1;
                             ar_jau_rastas_sutapimas = true;
                             // toliau vis tiek pravarom visus, maž bus dar kandidatas (kolizija td)
                         }
                     }
                 }
+                auto pab = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double> laikas = pab - pr;
                 std::cout << "\nĮvestis: " << ivestis << "\nMaiša: ";
                 spausd_baitais(maisa);
@@ -379,8 +444,6 @@ int main()
                 "[\\]^_`"
                 "abcdefghijklmnopqrstuvwxyz"
                 "{|}~";
-            unsigned int sekla = 123456789;
-            std::mt19937_64 generatorius(sekla);
             std::uniform_int_distribution<std::size_t> raidyno_pasiskirstymas(0, raidynas.size() - 1); // duos tolygiai paskirstytą random indeksą raidyno simboliui parinkt
             const size_t druskos_ilgis = 4;
             std::string druska;
@@ -394,11 +457,10 @@ int main()
 
             // ANTRINNASIN PALAIPSĀI...
             std::vector<std::string> sutapimai;
-            auto pr = std::chrono::high_resolution_clock::now();
-            auto pab = std::chrono::high_resolution_clock::now(); // maža kas jei neras sutapimo, tai pab sutaps su pr ir matysis tai
 
             bool ar_jau_rastas_sutapimas = false;
             int bandymu_sk = 0;
+            auto pr = std::chrono::high_resolution_clock::now();
             for (int i = 0; i < kandidatai.size(); ++i)
             {
                 auto kand = kandidatai.at(i);
@@ -408,13 +470,13 @@ int main()
                     sutapimai.push_back(kand);
                     if (!ar_jau_rastas_sutapimas)
                     {
-                        pab = std::chrono::high_resolution_clock::now();
                         bandymu_sk = i + 1;
                         ar_jau_rastas_sutapimas = true;
                         // toliau vis tiek pravarom visus, maž bus dar kandidatas (kolizija td)
                     }
                 }
             }
+            auto pab = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> laikas = pab - pr;
             std::cout << "\nĮvestis: " << ivestis_drusk << "\nMaiša: ";
             spausd_baitais(maisa_drusk);
@@ -423,7 +485,7 @@ int main()
             {
                 std::cout << sutap << " ";
             }
-            std::cout << "\nBandymų sk.: " << std::dec << bandymu_sk << "\nSutapimo paieškos laikas: " << laikas.count() << " s\n\n";
+            std::cout << "\nBandymų sk.: " << std::dec << bandymu_sk << "\nVeikimo laikas: " << laikas.count() << " s\n\n";
         }
     }
     return 0;

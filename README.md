@@ -5,6 +5,17 @@
 - **Programos tikslas:** generuoti įvesto teksto maišą.
 - Priimama tiek rankinis įvedimas (terminale), tiek failo įvestis (failą pasirenkant failų dialoge).
 - Išvedama 256 bitų ilgio (32 šešioliktainių sk.) maiša, sugeneruota pagal įvestį.
+- Į programą įtraukta ir maišos testavimo (eksperimentų) funkcijos (efektyvumo matavimas, kolizijos tyrimas, lavinos efekto tyrimas, spėjimo tyrimas).
+
+## Kompiliavimas ir paleidimas
+
+Paleidimo failo kūrimo komandos pvz. (naudojant g++ kompiliatorių):
+
+- g++ -std=c++23 main.cpp maisos_fjos.cpp pagalb_fjos.cpp -o main -luuid
+
+<sup>\*\* -luuid vėliavėlė reikalinga programoje naudojamai failų dialogų bibliotekai</sup>
+
+Programa paleidžiama komanda ./main (jeigu programos pavadinimas — main.exe).
 
 ## Eksperimentai
 
@@ -163,6 +174,101 @@ Programos pakartojimai matomi dviejose žemiau esančiose nuotraukose. Bet kokiu
 | 512       | 47435     | 0.0002122            | 0.0002079            | 0.0002114            | **0.0002233**        | **0.0002075**        | 0.00021246   | 0.0000158   |
 | 789       | 75596     | **0.0003427**        | 0.0003208            | **0.0003195**        | 0.0003213            | 0.0003274            | 0.00032634   | 0.0000232   |
 
+<sub>Kiekvienoje atitinkamo baitų sk. bandymų eilutėje paryškintos didžiausios ir mažiausios trukmės to baitų sk. kategorijai.</sub>
+
+Laiko matavimo priemonė: C++ "chrono" bibliotekos funkcija std::chrono::high_resolution_clock::now(). Kompiliavimo konfigūracija: be papildomo optimizavimo.
+
 Maišos skaičiavimo trukmės santykis nuo įvesties baitų skaičiaus matomas grafike žemiau. Grafiko 5 linijos žymi atitinkamus 5 bandymus.
 
 ![alt text](images/image-5.png)
+
+Grafike matyti, jog maišos skaičiavimo trukmė nuo įvesties dydžio priklauso apytikriai tiesiškai (O(n)).
+
+### 5. Kolizijų tyrimas
+
+Kolizijos tirtos trejopai:
+
+- Tikrinimas atsitiktinių eilučių poromis;
+- Visų atsitiktinių eilučių tikrinimas su visomis;
+- Nedidelių surašytų struktūruotų eilučių rinkinių tikrinimas.
+
+Pirmiems dviem būdams įvestys (eilutės) buvo generuojamos atsitiktinai, naudojant C++ "random" biblioteką. Generatorius: std::mt19937_64, sėkla: 123456789 (visiems generavimams naudota ši pati sėkla, kad eksperimentą būtų galima deterministiškai atkartoti). Eilutės generuotos naudojant ASCII simbolius 32-126 (nuo tarpo (" ") iki ~).
+
+Tikrinimas poromis:
+
+- tikrinimui generuota po 100 tūkst. atsitiktinių eilučių 10, 100, 500 ir 1000 simbolių ilgio;
+- kode sąlygomis užtikrinta, kad porose nebūtų dviejų vienodų eilučių;
+- kolizijoms tikrinti lygintos atitinkamo ilgio eilučių, esančių poroje, maišos;
+- įvykdžius eksperimentą, kolizijų nerasta.
+
+Tikrinimas visų su visais:
+
+- tikrinimui generuota po 100 tūkst. atsitiktinių eilučių 10, 100, 500 ir 1000 simbolių ilgio;
+- kolizijos tikrintos visų nevienodų eilučių maišas lyginant su visų kitų nevienodų atitinkamo ilgio eilučių maišomis;
+- įvykdžius eksperimentą, kolizijų nerasta.
+
+Nedidelio struktūruotų eilučių rinkinio tikrinimas:
+
+- rankiniu būdu surinkti ir surašyti 3 nedideli struktūruotų eilučių rinkiniai, kurių eilučių maišos tikrintos tarpusavyje
+  - "ABCDEFGH", "HGFEDCBA", "DCBAHGFE", "EFGHABCD", "HGFEDCBA", "ABEFCDGH", "ABGHCDEF", "GHEFCDAB" _(tikrinti perstatymus)_
+  - "BAAAAAAA", "ABAAAAAA", "AABAAAAA", "AAABAAAA", "AAAABAAA", "AAAAABAA", "AAAAAABA", "AAAAAAAB" _(tikrinti perstatymus)_
+  - "AAAAAAAA", "ABABABAB", "ABCABCAB", "ABCDABCD", "11111111", "12121212", "12312312", "12341234" _(tikrinti pasikartojimus)_
+- įvykdžius eksperimentą, kolizijų nerasta.
+
+Kolizijų tyrime iš viso tikrintų porų skaičius susideda iš:
+
+- 400 tūkst. porų pirmame tikrinime;
+- 4 _ (100 000 _ 99999) / 2 = 19 999 800 000 porų antrajame tikrinime;
+- 84 poros trečiajame tikrinime
+  Viso porų: 20 000 200 084\*
+
+<sup>\* Teoriškai antrajame bandyme galėjo būti sugeneruotų vienodų eilučių, kas kažkiek sumažintų visą porų skaičių, nors to tikimybė yra be galo maža.</sup>
+
+Atsižvelgiant į tai, kad idealios 256 bitų maišos atveju poros (nesusijusių įvesčių) kolizijos tikimybė lygi 1 / 2^256, šiame tyrime kolizijos aptikimo tikimybė galėtų būti apie 20 000 200 084 / 2^256 (~1,727\*10^-67) — kosmiškai maža tikimybė. Todėl tai, jog eksperimente nerasta jokių kolizijų, yra tikėtina (dėl palyginti labai mažos porų imties), todėl kolizijų neaptikimas nėra kriptografinio saugumo įrodymas.
+
+### 6. Lavinos efekto tyrimas
+
+Tyrimui generuota iš viso 100 000 porų (po 25 000 kiekvienam eilutės ilgiui: 10, 100, 500, 1000), kurių viena pirmoji eilutė sugeneruota visiškai atsitiktinai, o antroji — tokia pati kaip pirmoji, tik su viena atsitiktinai pakeista raide. Eilutėms generuoti naudotas toks pat generavimas kaip ankstesniajame tyrime.
+
+Tyrime tirtas lavinos efektas tiek maišos bitams, tiek šešioliktainiams skaitmenims.
+
+Tyrimo rezultatų skaičiai:
+
+- Bitų lavinos efektas:
+  - Vidutinis bitų skirtumas: 42,8728%;
+  - Mažiausias skirtumas: 42,3671% (100 simbolių eilutės);
+  - Didžiausias skirtumas: 44,2741% (10 simbolių eilutės);
+- Šešioliktainių skaitmenų (hex) lavinos efektas:
+  - Vidutinis hex skirtumas: 87,468%;
+  - Mažiausias skirtumas: 86,8517% (100 simbolių eilutės);
+  - Didžiausias skirtumas: 89,2121% (10 simbolių eilutės).
+
+Žemiau pateikta bitų skirtumo procentų diagrama.
+
+![alt text](images/image-6.png)
+
+Geras lavinos efektas nebūtinai reiškia atsparumą kolizijoms. Lavinos efektas lemia didelį maišos pasikeitimą neženkliai pakeitus įvestį, tačiau tai savaime neapsaugo nuo to, kad tam tikro struktūrinio skirtumo įvestys (pvz., tų pačių simbolių perstatymai, pasikartojantys šablonai) neturėtų tos pačios maišos (kolizija). Tokius maišos funkcijų trūkumus gali atskleisti struktūruotų įvesčių kolizijos tyrimas.
+
+### 7. Spėjimo eksperimentas
+
+Šiame eksperimente iš 10 tūkst. galimų kandidatų (eilučių nuo "0000" iki "9999") perrankos būdu bandoma rasti įvestį (nežinomą vieną iš kandidatų), žinant tik jos maišą ar ir druską (angl. salt). Eksperimente kandidatai perrenkami paeiliui (nuo pradžios iki galo).
+
+Įvestis generuojama atsitiktinai, bet su pastovia generatoriaus sėkla (123456789). Eksperimente sugeneruota įvestis: "3488". Bandyme su druska prie šios įvesties pridėta atsitiktinai sugeneruota 4 simbolių ilgio druska (žr. žemiau).
+
+Spėjimas be druskos:
+
+- Įvestis: 3488
+- Bandymų skaičius iki radimo: 3489
+- Veikimo laikas: 0.149653 s
+- Pagal sutapusią maišą rastas kandidatas: 3488
+
+Spėjimas su žinoma druska (rasti įvestį žinant jos maišą ir pridėtą druską):
+
+- Įvestis: 34889,"r
+- Bandymų skaičius iki atspėjimo: 3489
+- Veikimo laikas: 0.153756 s
+- Pagal sutapusią maišą rastas kandidatas: 3488
+
+Veikimo laikas perrinkti kandidatus su pridėta druska užtruko kiek mažiau nei 3% (2,74%) ilgiau nei perrinkti kandidatus be druskos. Taigi, pastangos rasti įvestį su druska yra kiek didesnės, tačiau neženkliai. Visgi druskos naudojimas eilučių maišai gali apsunkinti pakartotinį iš anksto apskaičiuotų rezultatų naudojimą — rezultatus reikia perskaičiuoti atsižvelgiant į druską.
+
+Jeigu druska būtų nežinoma (t.y. prie įvesties pridėtas r — nežinoma druska), tuomet kandidatų perrinkimas užtruktų gerokai ilgiau, priklausomai nuo druskos ilgio. Nežinant druskos ilgio, reikėtų tikrinti ne tik įvairias druskas, bet ir įvairaus ilgio druskas. Paieškai reikėtų kiekvienam pradinės įvesties (be druskos) kandidatui (šiuo atveju 10-iai tūkstančių kandidatų) išbandyti visas galimas druskos kombinacijas, taigi 10000 \* druskos kombinacijų sk. Pvz., jeigu druskai būtų naudojami net tik ASCII simboliai 32-126, t.y. 95 galimų simbolių raidynas, tuomet kiekvienam iš 10000 kandidatų reikėtų atlikti 95 + 95^2 + 95^3 + 95^4 + ... veiksmų (spėjamos druskos pridėjimas, maišos paskaičiavimas ir lyginimas). Visgi, jeigu druska randama, iš karto randama ir tikslinė įvestis (kadangi paieškoje lyginama su žinoma maišos H(įvestis || r) reikšme). Atskleidus r kitiems, jiems įvesčiai rasti tereiktų 10000 tikrinimų.
