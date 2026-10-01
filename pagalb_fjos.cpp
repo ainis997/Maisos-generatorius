@@ -39,10 +39,11 @@ std::vector<std::uint32_t> baitus_sujungt_po_4(std::vector<std::uint8_t> &baitai
     // reiktų rezervuot iš anksto vektoriui vietą
     for (size_t i = 0; i < baitai.size(); i += 4) // investis.size() visada turėtų būti 4-ių kartotinis (dėl resize'o)
     {
-        std::uint32_t blokas;
-        std::memcpy(&blokas, &baitai[i], 4); // 4, nes 32 / 8 = 4 (bloką sudarys 4 baitai)
-        blokas = std::byteswap(blokas);
-        // std::cout << ":: " << blokas << '\n';
+        std::uint32_t blokas =
+            (static_cast<std::uint32_t>(baitai[i]) << 24) |
+            (static_cast<std::uint32_t>(baitai[i + 1]) << 16) |
+            (static_cast<std::uint32_t>(baitai[i + 2]) << 8) |
+            (static_cast<std::uint32_t>(baitai[i + 3]));
         blokai.push_back(blokas);
     }
     return blokai;
@@ -58,10 +59,11 @@ std::vector<std::uint32_t> baitus_sujungt_po_4(std::vector<std::uint8_t> &&baita
     // reiktų rezervuot iš anksto vektoriui vietą
     for (size_t i = 0; i < baitai.size(); i += 4) // investis.size() visada turėtų būti 4-ių kartotinis (dėl resize'o)
     {
-        std::uint32_t blokas;
-        std::memcpy(&blokas, &baitai[i], 4); // 4, nes 32 / 8 = 4 (bloką sudarys 4 baitai)
-        blokas = std::byteswap(blokas);
-        // std::cout << ":: " << blokas << '\n';
+        std::uint32_t blokas =
+            (static_cast<std::uint32_t>(baitai[i]) << 24) |
+            (static_cast<std::uint32_t>(baitai[i + 1]) << 16) |
+            (static_cast<std::uint32_t>(baitai[i + 2]) << 8) |
+            (static_cast<std::uint32_t>(baitai[i + 3]));
         blokai.push_back(blokas);
     }
     return blokai;

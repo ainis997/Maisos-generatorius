@@ -3,7 +3,7 @@
 ## Apie programą
 
 - **Programos tikslas:** generuoti įvesto teksto maišą.
-- Priimama tiek rankinis įvedimas (terminale), tiek failo įvestis (failą pasirenkant failų dialoge).
+- Priimama tiek rankinis įvedimas (terminale), tiek failo įvestis (failą pasirenkant failų dialoge). UTF-8 kodavimas.
 - Išvedama 256 bitų ilgio (32 šešioliktainių sk.) maiša, sugeneruota pagal įvestį.
 - Į programą įtraukta ir maišos testavimo (eksperimentų) funkcijos (efektyvumo matavimas, kolizijos tyrimas, lavinos efekto tyrimas, spėjimo tyrimas).
 
@@ -13,9 +13,207 @@ Paleidimo failo kūrimo komandos pvz. (naudojant g++ kompiliatorių):
 
 - g++ -std=c++23 main.cpp maisos_fjos.cpp pagalb_fjos.cpp -o main -luuid
 
-<sup>\*\* -luuid vėliavėlė reikalinga programoje naudojamai failų dialogų bibliotekai</sup>
+<sup>\* -luuid vėliavėlė reikalinga programoje naudojamai failų dialogų bibliotekai</sup>
 
 Programa paleidžiama komanda ./main (jeigu programos pavadinimas — main.exe).
+
+## v0.2 maišos algoritmas
+
+v0.2 versijoje maišos algoritmas šiek tiek pagerintas (pasinaudojant DI patarimais). Pokyčiai nuo v0.1:
+
+- Pridėta 32 bitų blokų maiša dar prieš suspaudžiant ar išskleidžiant juos į aštuonis 32 bitų blokus;
+- Blokų maišai pagerinti naudojamas ̀šešioliktainių skaičių konstantų rinkinys;
+- Pataisytas maišytų 32 bitų blokų suskirstymas į baitus.
+
+v0.2 versijos algoritmas pasižymi didesniu lavinos efektu, tačiau didesne trukme (žr. eksperimentus žemiau).
+
+## Algoritmo pseudokodas
+
+Algoritmą sudaro dvi funkcijos: `BAITUS_SUJUNGT_PO_4` (sujungia įvesties baitus po 4 į 32 bitų blokus) ir `GAUTI_256BIT_HASHA` (atlieka visą maišą).
+
+**Funkcija BAITUS_SUJUNGT_PO_4(baitai)**
+
+**Įvestis:** baitų masyvas `baitai`
+**Išvestis:** 32 bitų blokų masyvas `blokai`
+
+**1.** Apskaičiuoti, kiek nulinių baitų reikia pridėti, kad baitų skaičius būtų 4 kartotinis:
+
+```text
+paddingas ← (4 - (ilgis(baitai) MOD 4)) MOD 4
+```
+
+**2.** Pridėti `paddingas` nulinių baitų prie `baitai` masyvo galo.
+
+**3.** Sukurti tuščią 32 bitų blokų masyvą `blokai`.
+
+**4.** Rezervuoti `ilgis(baitai) / 4` vietų masyve `blokai`.
+
+**5.** Pereiti per `baitai` kas 4 baitus:
+
+```text
+FOR i ← 0 TO ilgis(baitai) - 1 STEP 4 DO
+
+    blokas ←
+        (baitai[i]     << 24) OR
+        (baitai[i + 1] << 16) OR
+        (baitai[i + 2] << 8)  OR
+        baitai[i + 3]
+
+    PRIDĖTI blokas prie blokai
+
+END FOR
+```
+
+**6.** Grąžinti `blokai`.
+
+**Funkcija GAUTI_256BIT_HASHA(blokai)**
+
+**Įvestis:** 32 bitų sveikųjų skaičių blokų masyvas `blokai` (gaunama iš funkcijos `BAITUS_SUJUNGT_PO_4`)
+**Išvestis:** 256 bitų maišos reikšmė, sudaryta iš 32 baitų
+
+**1. Nustatyti 8 konstantas:**
+
+```text
+K[0] ← A3D71B29
+K[1] ← 6C8E93F5
+K[2] ← D4B21763
+K[3] ← 39F15AC7
+K[4] ← 82E64D1B
+K[5] ← 57C93AF1
+K[6] ← E1B46D85
+K[7] ← 2F73C9D3
+```
+
+**2. Pirminis kiekvieno bloko maišymas**
+
+```text
+FOR i ← 0 TO ilgis(blokai) - 1 DO
+    x ← blokai[i]
+
+    FOR r ← 0 TO 7 DO
+
+        x ← x XOR K[(i + r) MOD 8]
+             XOR ((i + r) × K[(i + 3) MOD 8])
+
+        poslinkis ←
+            (((i + 1) × (x >> 27) × K[(r × x) MOD 8]) MOD 31) + 1
+
+        x ← DEŠINYSIS_PERSUKIMAS_32_BITŲ(x, poslinkis)
+
+        x ← x × K[(i + r) MOD 8]
+
+    END FOR
+
+    blokai[i] ← x
+END FOR
+```
+
+Visos `x` operacijos atliekamos su 32 bitų sveikaisiais skaičiais, todėl persipildžius reikšmėms išsaugomi tik žemiausi 32 bitai.
+
+**3. Blokų skaičiaus suvienodinimas iki 8 blokų**
+
+```text
+IF ilgis(blokai) < 8 THEN
+
+    idx ← ilgis(blokai) - 1
+
+    WHILE ilgis(blokai) < 8 DO
+
+        IF idx < 0 THEN
+            idx ← ilgis(blokai) - 1
+        END IF
+
+        naujas_blokas ← blokai[idx]
+
+        naujas_blokas ←
+            DEŠINYSIS_PERSUKIMAS_32_BITŲ(naujas_blokas, (idx MOD 2) + 1)
+
+        PRIDĖTI naujas_blokas prie blokai
+
+        idx ← idx - 1
+
+    END WHILE
+
+ELSE IF ilgis(blokai) > 8 THEN
+
+    FOR i ← 0 TO 7 DO
+
+        idx ← i + 8
+
+        WHILE idx < ilgis(blokai) DO
+            blokai[i] ← blokai[i] XOR blokai[idx]
+            idx ← idx + 8
+        END WHILE
+
+        blokai[i] ←
+            DEŠINYSIS_PERSUKIMAS_32_BITŲ(blokai[i], (idx MOD 2) + 1)
+
+    END FOR
+
+    pašalinti visus blokai elementus nuo 9-ojo iki galo
+
+ELSE
+
+    FOR i ← 0 TO 7 DO
+        blokai[i] ←
+            DEŠINYSIS_PERSUKIMAS_32_BITŲ(blokai[i], (i MOD 2) + 1)
+    END FOR
+
+END IF
+```
+
+**4. Papildomas blokų maišymas**
+
+```text
+FOR i ← 0 TO ilgis(blokai) - 1 DO
+
+    FOR j ← 0 TO ilgis(blokai) - 1 DO
+        blokai[i] ← blokai[i] + blokai[j]
+    END FOR
+
+END FOR
+```
+
+Sudėties rezultatas apribojamas iki 32 bitų.
+
+**5. 32 bitų blokų pavertimas į baitus**
+
+```text
+isvestis ← tuščias baitų masyvas
+
+FOR kiekvienas blokas blokai masyve DO
+
+    PRIDĖTI prie isvestis (blokas >> 24) AND FF
+    PRIDĖTI prie isvestis (blokas >> 16) AND FF
+    PRIDĖTI prie isvestis (blokas >> 8)  AND FF
+    PRIDĖTI prie isvestis blokas AND FF
+
+END FOR
+```
+
+Tokiu būdu kiekvienas 32 bitų blokas išskaidomas į 4 baitus, todėl po šio žingsnio gaunama 8 × 4 = **32 baitai (256 bitai)**.
+
+**6. Galutinis maišymas baitų lygmeniu**
+
+```text
+FOR i ← 0 TO ilgis(isvestis) - 1 DO
+
+    FOR j ← 0 TO ilgis(isvestis) - 1 DO
+
+        IF i ≠ j THEN
+            isvestis[i] ← isvestis[i] + isvestis[j]
+        END IF
+
+    END FOR
+
+END FOR
+```
+
+Baitų sudėtis atliekama moduliu \(2^8\), todėl išlaikomi tik 8 mažiausi rezultato bitai.
+
+**7. Grąžinti `isvestis`.**
+
+<sub>\* Pseudokodas parašytas DI pagalba.</sub>
 
 ## Eksperimentai
 
