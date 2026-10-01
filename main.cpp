@@ -429,7 +429,7 @@ int main()
                 {
                     std::cout << sutap << " ";
                 }
-                std::cout << "\nBandymų sk.: " << std::dec << bandymu_sk << "\nSutapimo paieškos laikas: " << laikas.count() << " s\n\n";
+                std::cout << "\nBandymų sk.: " << std::dec << bandymu_sk << "\nVeikimo laikas: " << laikas.count() << " s\n\n";
             }
 
             // spėjimas su druska
